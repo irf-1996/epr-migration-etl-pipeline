@@ -1,3 +1,4 @@
+
 # Legacy-to-EPR Patient Data Migration & ETL Pipeline
 
 A portfolio project simulating a real-world NHS system migration: moving
@@ -90,3 +91,5 @@ sqlite3 data/epr_system.db < sql/03_validation_and_reporting_queries.sql
 - Data migration & conversion (schema mapping, format normalisation)
 - Data quality validation (rejection logging, referential integrity checks)
 - Stakeholder requirements gathering & sign-off documentation
+
+
