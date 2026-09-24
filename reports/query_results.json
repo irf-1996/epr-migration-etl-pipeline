@@ -1,0 +1,144 @@
+{
+  "rejects_by_reason": [
+    {
+      "reason": "Patient not found in migrated patients table (orphaned or rejected upstream)",
+      "reject_count": 60
+    },
+    {
+      "reason": "Invalid or missing NHS number",
+      "reject_count": 18
+    },
+    {
+      "reason": "Duplicate NHS number (already migrated)",
+      "reject_count": 8
+    }
+  ],
+  "bad_nhs_after_load": [],
+  "orphan_appointments_after_load": [],
+  "clinician_activity": [
+    {
+      "full_name": "Dr. Rajesh Menon",
+      "total_appointments": 174,
+      "attended": 46,
+      "dna_count": 44,
+      "dna_rate_pct": 25.3
+    },
+    {
+      "full_name": "Nurse Practitioner Kate Liu",
+      "total_appointments": 170,
+      "attended": 48,
+      "dna_count": 41,
+      "dna_rate_pct": 24.1
+    },
+    {
+      "full_name": "Dr. Emily Carter",
+      "total_appointments": 152,
+      "attended": 52,
+      "dna_count": 30,
+      "dna_rate_pct": 19.7
+    },
+    {
+      "full_name": "Dr. Sophie Hall",
+      "total_appointments": 185,
+      "attended": 60,
+      "dna_count": 35,
+      "dna_rate_pct": 18.9
+    },
+    {
+      "full_name": "Dr. Michael Osei",
+      "total_appointments": 163,
+      "attended": 53,
+      "dna_count": 28,
+      "dna_rate_pct": 17.2
+    }
+  ],
+  "monthly_volume": [
+    {
+      "month": "2025-01",
+      "appointment_count": 52
+    },
+    {
+      "month": "2025-02",
+      "appointment_count": 32
+    },
+    {
+      "month": "2025-03",
+      "appointment_count": 33
+    },
+    {
+      "month": "2025-04",
+      "appointment_count": 49
+    },
+    {
+      "month": "2025-05",
+      "appointment_count": 41
+    },
+    {
+      "month": "2025-06",
+      "appointment_count": 41
+    },
+    {
+      "month": "2025-07",
+      "appointment_count": 42
+    },
+    {
+      "month": "2025-08",
+      "appointment_count": 35
+    },
+    {
+      "month": "2025-09",
+      "appointment_count": 29
+    },
+    {
+      "month": "2025-10",
+      "appointment_count": 50
+    },
+    {
+      "month": "2025-11",
+      "appointment_count": 47
+    },
+    {
+      "month": "2025-12",
+      "appointment_count": 42
+    },
+    {
+      "month": "2026-01",
+      "appointment_count": 49
+    },
+    {
+      "month": "2026-02",
+      "appointment_count": 45
+    },
+    {
+      "month": "2026-03",
+      "appointment_count": 47
+    },
+    {
+      "month": "2026-04",
+      "appointment_count": 44
+    },
+    {
+      "month": "2026-05",
+      "appointment_count": 53
+    },
+    {
+      "month": "2026-06",
+      "appointment_count": 41
+    },
+    {
+      "month": "2026-07",
+      "appointment_count": 41
+    },
+    {
+      "month": "2026-08",
+      "appointment_count": 31
+    }
+  ],
+  "table_counts": {
+    "patients": 382,
+    "addresses": 382,
+    "clinicians": 5,
+    "appointments": 844,
+    "migration_rejects": 86
+  }
+}

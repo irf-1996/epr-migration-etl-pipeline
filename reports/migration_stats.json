@@ -1,0 +1,12 @@
+{
+  "patients": {
+    "loaded": 382,
+    "rejected_bad_nhs": 18,
+    "rejected_duplicate": 8
+  },
+  "appointments": {
+    "loaded": 844,
+    "rejected_orphan_patient": 60,
+    "rejected_bad_date": 0
+  }
+}

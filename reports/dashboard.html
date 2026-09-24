@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Legacy → EPR Data Migration Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f7fa;
+    --card-bg: #ffffff;
+    --text: #1a2733;
+    --muted: #5b6b7a;
+    --accent: #2E75B6;
+    --accent-light: #eaf2fa;
+    --border: #dde5ec;
+    --good: #2e9e5b;
+    --bad: #c0392b;
+    --warn: #d68910;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101820;
+      --card-bg: #182430;
+      --text: #e8eef4;
+      --muted: #9db0c0;
+      --accent: #5aa3e0;
+      --accent-light: #1c2c3a;
+      --border: #2a3b4a;
+      --good: #4bc17a;
+      --bad: #e0685a;
+      --warn: #e0b054;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101820;
+    --card-bg: #182430;
+    --text: #e8eef4;
+    --muted: #9db0c0;
+    --accent: #5aa3e0;
+    --accent-light: #1c2c3a;
+    --border: #2a3b4a;
+    --good: #4bc17a;
+    --bad: #e0685a;
+    --warn: #e0b054;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    padding: 24px;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  header { margin-bottom: 24px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px 0; }
+  .subtitle { color: var(--muted); font-size: 0.95rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .stat-value { font-size: 1.7rem; font-weight: 700; color: var(--accent); }
+  .stat-label { color: var(--muted); font-size: 0.82rem; margin-top: 4px; }
+  .stat-value.good { color: var(--good); }
+  .stat-value.bad { color: var(--bad); }
+  section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  section h2 { font-size: 1.05rem; margin: 0 0 14px 0; }
+  .chart-container { position: relative; height: 260px; width: 100%; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 0.75rem; font-weight: 600;
+  }
+  .badge.pass { background: var(--accent-light); color: var(--good); }
+  .overflow-x { overflow-x: auto; }
+  footer { color: var(--muted); font-size: 0.78rem; text-align: center; padding: 20px 0 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Legacy PAS → EPR Migration Dashboard</h1>
+    <div class="subtitle">Post-migration validation report — synthetic demo dataset</div>
+  </header>
+
+  <div class="grid" id="statGrid"></div>
+
+  <section>
+    <h2>Migration outcome by table</h2>
+    <div class="chart-container"><canvas id="loadChart"></canvas></div>
+  </section>
+
+  <section>
+    <h2>Rejections by reason</h2>
+    <div class="chart-container"><canvas id="rejectChart"></canvas></div>
+  </section>
+
+  <section>
+    <h2>Clinician appointment activity &amp; DNA rate</h2>
+    <div class="overflow-x">
+      <table id="clinicianTable">
+        <thead><tr><th>Clinician</th><th>Total appts</th><th>Attended</th><th>DNA</th><th>DNA rate</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Data quality validation (post-load)</h2>
+    <table>
+      <tbody>
+        <tr><td>Patients with invalid/missing NHS number</td><td><span class="badge pass" id="badNhsBadge">–</span></td></tr>
+        <tr><td>Orphaned appointments (no matching patient)</td><td><span class="badge pass" id="orphanBadge">–</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>Portfolio project — Legacy-to-EPR ETL pipeline · SQLite + Python · synthetic data only</footer>
+</div>
+
+<script>
+// Snapshot data generated from the actual pipeline run (reports/migration_stats.json + query_results.json)
+const migrationStats = __MIGRATION_STATS__;
+const queryResults = __QUERY_RESULTS__;
+
+function fmt(n) { return n.toLocaleString(); }
+
+// Stat cards
+const statGrid = document.getElementById('statGrid');
+const cards = [
+  { label: 'Patients migrated', value: fmt(migrationStats.patients.loaded), cls: 'good' },
+  { label: 'Patients rejected', value: fmt(migrationStats.patients.rejected_bad_nhs + migrationStats.patients.rejected_duplicate), cls: 'bad' },
+  { label: 'Appointments migrated', value: fmt(migrationStats.appointments.loaded), cls: 'good' },
+  { label: 'Appointments rejected', value: fmt(migrationStats.appointments.rejected_orphan_patient + migrationStats.appointments.rejected_bad_date), cls: 'bad' },
+];
+cards.forEach(c => {
+  const div = document.createElement('div');
+  div.className = 'stat-card';
+  div.innerHTML = `<div class="stat-value ${c.cls}">${c.value}</div><div class="stat-label">${c.label}</div>`;
+  statGrid.appendChild(div);
+});
+
+const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+const gridColor = isDark ? '#2a3b4a' : '#dde5ec';
+const textColor = isDark ? '#9db0c0' : '#5b6b7a';
+Chart.defaults.color = textColor;
+Chart.defaults.borderColor = gridColor;
+
+new Chart(document.getElementById('loadChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Patients', 'Appointments'],
+    datasets: [
+      { label: 'Loaded', data: [migrationStats.patients.loaded, migrationStats.appointments.loaded], backgroundColor: '#2E75B6' },
+      { label: 'Rejected', data: [
+          migrationStats.patients.rejected_bad_nhs + migrationStats.patients.rejected_duplicate,
+          migrationStats.appointments.rejected_orphan_patient + migrationStats.appointments.rejected_bad_date
+        ], backgroundColor: '#c0392b' }
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+});
+
+new Chart(document.getElementById('rejectChart'), {
+  type: 'bar',
+  data: {
+    labels: queryResults.rejects_by_reason.map(r => r.reason.length > 40 ? r.reason.slice(0,40)+'…' : r.reason),
+    datasets: [{ label: 'Count', data: queryResults.rejects_by_reason.map(r => r.reject_count), backgroundColor: '#d68910' }]
+  },
+  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+});
+
+const tbody = document.querySelector('#clinicianTable tbody');
+queryResults.clinician_activity.forEach(row => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${row.full_name}</td><td>${row.total_appointments}</td><td>${row.attended}</td><td>${row.dna_count}</td><td>${row.dna_rate_pct}%</td>`;
+  tbody.appendChild(tr);
+});
+
+document.getElementById('badNhsBadge').textContent = queryResults.bad_nhs_after_load.length === 0 ? 'PASS — 0 found' : `${queryResults.bad_nhs_after_load.length} found`;
+document.getElementById('orphanBadge').textContent = queryResults.orphan_appointments_after_load.length === 0 ? 'PASS — 0 found' : `${queryResults.orphan_appointments_after_load.length} found`;
+</script>
+</body>
+</html>
